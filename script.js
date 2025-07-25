@@ -215,6 +215,9 @@ class SolarSystem {
 
         // 创建近邻星系
         this.createNearbyGalaxies();
+        
+        // 创建遥远的宇宙奇观
+        this.createDistantCosmicWonders();
     }
 
     createSun(data) {
@@ -1344,6 +1347,847 @@ class SolarSystem {
         return new THREE.CanvasTexture(canvas);
     }
 
+    createDistantCosmicWonders() {
+        // 遥远宇宙奇观数据 (距离单位：光年，按比例极度缩放)
+        const cosmicWonders = [
+            {
+                name: 'Pillars of Creation',
+                type: 'stellar_nursery',
+                distance: 2000,
+                position: { x: 1200, y: 800, z: -1500 },
+                size: 100,
+                color: 0x4B0082,
+                secondaryColor: 0xDDA0DD,
+                pillars: 3,
+                brightness: 0.6
+            },
+            {
+                name: 'Horsehead Nebula',
+                type: 'dark_nebula',
+                distance: 1800,
+                position: { x: -1000, y: -600, z: 1200 },
+                size: 80,
+                color: 0x800080,
+                brightness: 0.5
+            },
+            {
+                name: 'Crab Nebula',
+                type: 'supernova_remnant',
+                distance: 2200,
+                position: { x: 800, y: -800, z: -1800 },
+                size: 70,
+                color: 0xFF6347,
+                secondaryColor: 0x00CED1,
+                expansion: true,
+                brightness: 0.7
+            },
+            {
+                name: 'Rosette Nebula',
+                type: 'emission_nebula',
+                distance: 1600,
+                position: { x: -1400, y: 400, z: 1000 },
+                size: 90,
+                color: 0xFF1493,
+                secondaryColor: 0xFF69B4,
+                brightness: 0.6
+            },
+            {
+                name: 'Cat\'s Eye Nebula',
+                type: 'planetary_nebula',
+                distance: 1900,
+                position: { x: 600, y: 1200, z: 800 },
+                size: 50,
+                color: 0x00FFFF,
+                secondaryColor: 0x32CD32,
+                rings: true,
+                brightness: 0.8
+            },
+            {
+                name: 'Veil Nebula',
+                type: 'supernova_remnant',
+                distance: 2100,
+                position: { x: -800, y: -1200, z: -900 },
+                size: 120,
+                color: 0x9370DB,
+                secondaryColor: 0x20B2AA,
+                filamentary: true,
+                brightness: 0.5
+            },
+            {
+                name: 'Eagle Nebula',
+                type: 'stellar_nursery',
+                distance: 2300,
+                position: { x: 1600, y: -400, z: 1400 },
+                size: 110,
+                color: 0x8B0000,
+                secondaryColor: 0xFFD700,
+                pillars: 4,
+                brightness: 0.7
+            },
+            {
+                name: 'Ring Nebula',
+                type: 'planetary_nebula',
+                distance: 1700,
+                position: { x: -600, y: 800, z: -1100 },
+                size: 40,
+                color: 0x00FA9A,
+                secondaryColor: 0xFF4500,
+                rings: true,
+                brightness: 0.9
+            },
+            {
+                name: 'Helix Nebula',
+                type: 'planetary_nebula',
+                distance: 2000,
+                position: { x: 1000, y: -1000, z: 600 },
+                size: 85,
+                color: 0x4169E1,
+                secondaryColor: 0xFFA500,
+                rings: true,
+                brightness: 0.6
+            },
+            {
+                name: 'Orion Nebula',
+                type: 'stellar_nursery',
+                distance: 1500,
+                position: { x: -1200, y: 600, z: -800 },
+                size: 130,
+                color: 0xFF69B4,
+                secondaryColor: 0x00CED1,
+                trapezium: true,
+                brightness: 0.8
+            }
+        ];
+
+        cosmicWonders.forEach(wonder => {
+            this.createCosmicWonder(wonder);
+        });
+    }
+
+    createCosmicWonder(wonderData) {
+        const group = new THREE.Group();
+        
+        // 根据类型创建不同的宇宙奇观
+        switch(wonderData.type) {
+            case 'stellar_nursery':
+                this.createStellarNursery(group, wonderData);
+                break;
+            case 'dark_nebula':
+                this.createDarkNebula(group, wonderData);
+                break;
+            case 'supernova_remnant':
+                this.createSupernovaRemnant(group, wonderData);
+                break;
+            case 'emission_nebula':
+                this.createEmissionNebula(group, wonderData);
+                break;
+            case 'planetary_nebula':
+                this.createPlanetaryNebula(group, wonderData);
+                break;
+        }
+        
+        // 设置位置
+        group.position.set(wonderData.position.x, wonderData.position.y, wonderData.position.z);
+        
+        // 添加轻微的旋转动画
+        group.userData = {
+            ...wonderData,
+            rotationSpeed: (Math.random() - 0.5) * 0.0001
+        };
+        
+        this.scene.add(group);
+        
+        // 存储用于动画更新
+        if (!this.cosmicWonders) this.cosmicWonders = [];
+        this.cosmicWonders.push(group);
+    }
+
+    createStellarNursery(group, wonderData) {
+        // 创建恒星诞生区域 - 创生支柱效果
+        
+        // 1. 主星云体
+        const mainCloudGeometry = new THREE.SphereGeometry(wonderData.size, 32, 32);
+        const mainCloudTexture = this.createStellarNurseryTexture(wonderData);
+        const mainCloudMaterial = new THREE.MeshBasicMaterial({
+            map: mainCloudTexture,
+            transparent: true,
+            opacity: wonderData.brightness * 0.6,
+            side: THREE.DoubleSide
+        });
+        
+        const mainCloud = new THREE.Mesh(mainCloudGeometry, mainCloudMaterial);
+        group.add(mainCloud);
+        
+        // 2. 创生支柱
+        if (wonderData.pillars) {
+            for (let i = 0; i < wonderData.pillars; i++) {
+                this.createPillarOfCreation(group, wonderData, i);
+            }
+        }
+        
+        // 3. 新生恒星
+        this.createNewbornStars(group, wonderData);
+        
+        // 4. 气体流和湍流
+        this.createGasFlows(group, wonderData);
+        
+        // 5. 特殊结构（如猎户座星云的四边形）
+        if (wonderData.trapezium) {
+            this.createTrapeziumCluster(group, wonderData);
+        }
+    }
+
+    createPillarOfCreation(group, wonderData, index) {
+        const pillarHeight = wonderData.size * (0.8 + Math.random() * 0.6);
+        const pillarRadius = wonderData.size * 0.15;
+        
+        // 支柱主体 - 使用圆锥体模拟支柱形状
+        const pillarGeometry = new THREE.ConeGeometry(pillarRadius, pillarHeight, 16, 8);
+        const pillarTexture = this.createPillarTexture(wonderData);
+        const pillarMaterial = new THREE.MeshBasicMaterial({
+            map: pillarTexture,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide
+        });
+        
+        const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
+        
+        // 随机放置支柱
+        const angle = (index / wonderData.pillars) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+        const distance = wonderData.size * 0.3;
+        pillar.position.set(
+            Math.cos(angle) * distance,
+            Math.random() * wonderData.size * 0.2,
+            Math.sin(angle) * distance
+        );
+        
+        // 随机旋转
+        pillar.rotation.x = (Math.random() - 0.5) * 0.3;
+        pillar.rotation.z = (Math.random() - 0.5) * 0.3;
+        
+        group.add(pillar);
+        
+        // 支柱顶端的恒星形成区域
+        const tipGeometry = new THREE.SphereGeometry(pillarRadius * 0.8, 8, 8);
+        const tipMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.secondaryColor,
+            transparent: true,
+            opacity: 0.9,
+            emissive: wonderData.secondaryColor,
+            emissiveIntensity: 0.3
+        });
+        
+        const tip = new THREE.Mesh(tipGeometry, tipMaterial);
+        tip.position.copy(pillar.position);
+        tip.position.y += pillarHeight * 0.4;
+        group.add(tip);
+        
+        // 从支柱射出的恒星风
+        this.createStellarWinds(group, tip.position, wonderData);
+    }
+
+    createNewbornStars(group, wonderData) {
+        const starCount = 20 + Math.floor(Math.random() * 30);
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(starCount * 3);
+        const colors = new Float32Array(starCount * 3);
+        const sizes = new Float32Array(starCount);
+        
+        for (let i = 0; i < starCount; i++) {
+            // 随机分布在星云内
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+            const radius = wonderData.size * Math.pow(Math.random(), 0.5);
+            
+            positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+            positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            positions[i * 3 + 2] = radius * Math.cos(phi);
+            
+            // 年轻恒星的颜色（蓝白色为主）
+            const starColor = new THREE.Color();
+            if (Math.random() < 0.7) {
+                starColor.setHSL(0.6 + Math.random() * 0.1, 0.8, 0.9); // 蓝白色
+            } else {
+                starColor.setHSL(0.1, 0.8, 0.8); // 年轻的橙色巨星
+            }
+            
+            colors[i * 3] = starColor.r;
+            colors[i * 3 + 1] = starColor.g;
+            colors[i * 3 + 2] = starColor.b;
+            
+            sizes[i] = 2 + Math.random() * 3;
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        
+        const material = new THREE.PointsMaterial({
+            size: 3,
+            transparent: true,
+            opacity: 0.9,
+            vertexColors: true,
+            sizeAttenuation: true
+        });
+        
+        const stars = new THREE.Points(geometry, material);
+        group.add(stars);
+    }
+
+    createGasFlows(group, wonderData) {
+        // 创建气体流动效果
+        const flowCount = 5;
+        for (let i = 0; i < flowCount; i++) {
+            const points = [];
+            const startRadius = wonderData.size * 0.8;
+            const endRadius = wonderData.size * 1.5;
+            
+            // 创建弯曲的气体流路径
+            for (let j = 0; j <= 20; j++) {
+                const t = j / 20;
+                const angle = (i / flowCount) * Math.PI * 2 + t * Math.PI * 0.5;
+                const radius = startRadius + (endRadius - startRadius) * t;
+                const height = (Math.sin(t * Math.PI) - 0.5) * wonderData.size * 0.3;
+                
+                points.push(new THREE.Vector3(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                ));
+            }
+            
+            const flowGeometry = new THREE.TubeGeometry(
+                new THREE.CatmullRomCurve3(points),
+                50,
+                wonderData.size * 0.02,
+                8,
+                false
+            );
+            
+            const flowMaterial = new THREE.MeshBasicMaterial({
+                color: wonderData.color,
+                transparent: true,
+                opacity: 0.3,
+                emissive: wonderData.color,
+                emissiveIntensity: 0.1
+            });
+            
+            const flow = new THREE.Mesh(flowGeometry, flowMaterial);
+            group.add(flow);
+        }
+    }
+
+    createStellarWinds(group, position, wonderData) {
+        // 从新生恒星发出的恒星风
+        const windCount = 8;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(windCount * 3);
+        const velocities = [];
+        
+        for (let i = 0; i < windCount; i++) {
+            const direction = new THREE.Vector3(
+                (Math.random() - 0.5) * 2,
+                Math.random(),
+                (Math.random() - 0.5) * 2
+            ).normalize();
+            
+            positions[i * 3] = position.x;
+            positions[i * 3 + 1] = position.y;
+            positions[i * 3 + 2] = position.z;
+            
+            velocities.push(direction.multiplyScalar(0.5));
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        
+        const material = new THREE.PointsMaterial({
+            color: wonderData.secondaryColor,
+            size: 1,
+            transparent: true,
+            opacity: 0.6
+        });
+        
+        const winds = new THREE.Points(geometry, material);
+        winds.userData = { velocities, maxDistance: wonderData.size * 0.5 };
+        group.add(winds);
+    }
+
+    createTrapeziumCluster(group, wonderData) {
+        // 创建猎户座星云特有的四边形星团
+        const trapeziumStars = [
+            { x: 0, y: 0, z: 0, color: 0x87CEEB, size: 4 },
+            { x: 5, y: 3, z: 2, color: 0xFFFFFF, size: 3.5 },
+            { x: -3, y: -4, z: 1, color: 0xB0E0E6, size: 3 },
+            { x: 2, y: -2, z: -3, color: 0xF0F8FF, size: 3.2 }
+        ];
+        
+        trapeziumStars.forEach(star => {
+            const starGeometry = new THREE.SphereGeometry(star.size * 0.5, 8, 8);
+            const starMaterial = new THREE.MeshBasicMaterial({
+                color: star.color,
+                emissive: star.color,
+                emissiveIntensity: 0.5
+            });
+            
+            const starMesh = new THREE.Mesh(starGeometry, starMaterial);
+            starMesh.position.set(star.x, star.y, star.z);
+            group.add(starMesh);
+            
+            // 添加星光效果
+            const glowGeometry = new THREE.SphereGeometry(star.size, 16, 16);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: star.color,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.BackSide
+            });
+            
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            glow.position.copy(starMesh.position);
+            group.add(glow);
+        });
+    }
+
+    createDarkNebula(group, wonderData) {
+        // 创建暗星云（如马头星云）
+        const cloudGeometry = new THREE.SphereGeometry(wonderData.size, 24, 24);
+        const cloudTexture = this.createDarkNebulaTexture(wonderData);
+        const cloudMaterial = new THREE.MeshBasicMaterial({
+            map: cloudTexture,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide
+        });
+        
+        const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        group.add(cloud);
+        
+        // 背景发光区域
+        const backgroundGeometry = new THREE.SphereGeometry(wonderData.size * 1.5, 16, 16);
+        const backgroundMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.2,
+            side: THREE.BackSide
+        });
+        
+        const background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+        group.add(background);
+        
+        // 边缘发光效果
+        this.createNebulaEdgeGlow(group, wonderData);
+    }
+
+    createSupernovaRemnant(group, wonderData) {
+        // 创建超新星遗迹
+        const shellGeometry = new THREE.SphereGeometry(wonderData.size, 32, 32);
+        const shellTexture = this.createSupernovaTexture(wonderData);
+        const shellMaterial = new THREE.MeshBasicMaterial({
+            map: shellTexture,
+            transparent: true,
+            opacity: wonderData.brightness,
+            side: THREE.DoubleSide
+        });
+        
+        const shell = new THREE.Mesh(shellGeometry, shellMaterial);
+        group.add(shell);
+        
+        // 激波前沿
+        if (wonderData.expansion) {
+            this.createShockFront(group, wonderData);
+        }
+        
+        // 丝状结构
+        if (wonderData.filamentary) {
+            this.createFilamentaryStructure(group, wonderData);
+        }
+        
+        // 中心中子星或黑洞
+        this.createCompactRemnant(group, wonderData);
+    }
+
+    createEmissionNebula(group, wonderData) {
+        // 创建发射星云
+        const nebulaGeometry = new THREE.SphereGeometry(wonderData.size, 32, 32);
+        const nebulaTexture = this.createEmissionNebulaTexture(wonderData);
+        const nebulaMaterial = new THREE.MeshBasicMaterial({
+            map: nebulaTexture,
+            transparent: true,
+            opacity: wonderData.brightness,
+            side: THREE.DoubleSide,
+            emissive: wonderData.color,
+            emissiveIntensity: 0.2
+        });
+        
+        const nebula = new THREE.Mesh(nebulaGeometry, nebulaMaterial);
+        group.add(nebula);
+        
+        // 电离氢区域
+        this.createHIIRegions(group, wonderData);
+        
+        // 暗尘带
+        this.createDustLanes(group, wonderData);
+    }
+
+    createPlanetaryNebula(group, wonderData) {
+        // 创建行星状星云
+        if (wonderData.rings) {
+            this.createNebulaRings(group, wonderData);
+        }
+        
+        // 中心白矮星
+        this.createCentralWhiteDwarf(group, wonderData);
+        
+        // 外层包络
+        this.createNebulaEnvelope(group, wonderData);
+    }
+
+    // 纹理创建方法
+    createStellarNurseryTexture(wonderData) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const context = canvas.getContext('2d');
+        
+        // 创建复杂的星云纹理
+        const gradient = context.createRadialGradient(256, 256, 0, 256, 256, 256);
+        const primaryColor = new THREE.Color(wonderData.color);
+        const secondaryColor = new THREE.Color(wonderData.secondaryColor);
+        
+        gradient.addColorStop(0, `rgba(${Math.floor(secondaryColor.r * 255)}, ${Math.floor(secondaryColor.g * 255)}, ${Math.floor(secondaryColor.b * 255)}, 0.8)`);
+        gradient.addColorStop(0.4, `rgba(${Math.floor(primaryColor.r * 255)}, ${Math.floor(primaryColor.g * 255)}, ${Math.floor(primaryColor.b * 255)}, 0.6)`);
+        gradient.addColorStop(0.8, `rgba(${Math.floor(primaryColor.r * 255)}, ${Math.floor(primaryColor.g * 255)}, ${Math.floor(primaryColor.b * 255)}, 0.3)`);
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 512, 512);
+        
+        // 添加湍流和气体团块
+        for (let i = 0; i < 50; i++) {
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const radius = 10 + Math.random() * 30;
+            
+            const localGradient = context.createRadialGradient(x, y, 0, x, y, radius);
+            localGradient.addColorStop(0, `rgba(${Math.floor(secondaryColor.r * 255)}, ${Math.floor(secondaryColor.g * 255)}, ${Math.floor(secondaryColor.b * 255)}, 0.6)`);
+            localGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            
+            context.fillStyle = localGradient;
+            context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+        }
+        
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    createPillarTexture(wonderData) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 512;
+        const context = canvas.getContext('2d');
+        
+        // 创建支柱纹理 - 从顶部明亮到底部暗淡
+        const gradient = context.createLinearGradient(0, 0, 0, 512);
+        const color = new THREE.Color(wonderData.color);
+        
+        gradient.addColorStop(0, `rgba(${Math.floor(color.r * 255)}, ${Math.floor(color.g * 255)}, ${Math.floor(color.b * 255)}, 0.9)`);
+        gradient.addColorStop(0.7, `rgba(${Math.floor(color.r * 200)}, ${Math.floor(color.g * 200)}, ${Math.floor(color.b * 200)}, 0.7)`);
+        gradient.addColorStop(1, `rgba(${Math.floor(color.r * 100)}, ${Math.floor(color.g * 100)}, ${Math.floor(color.b * 100)}, 0.5)`);
+        
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 256, 512);
+        
+        // 添加细节纹理
+        context.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        context.lineWidth = 1;
+        for (let i = 0; i < 20; i++) {
+            context.beginPath();
+            context.moveTo(Math.random() * 256, 0);
+            context.lineTo(Math.random() * 256, 512);
+            context.stroke();
+        }
+        
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    createDarkNebulaTexture(wonderData) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const context = canvas.getContext('2d');
+        
+        // 创建暗星云效果
+        context.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        context.fillRect(0, 0, 512, 512);
+        
+        // 添加尘埃纹理
+        for (let i = 0; i < 100; i++) {
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const radius = 5 + Math.random() * 15;
+            
+            context.fillStyle = `rgba(${Math.floor(Math.random() * 50)}, ${Math.floor(Math.random() * 50)}, ${Math.floor(Math.random() * 50)}, 0.7)`;
+            context.beginPath();
+            context.arc(x, y, radius, 0, Math.PI * 2);
+            context.fill();
+        }
+        
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    createSupernovaTexture(wonderData) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const context = canvas.getContext('2d');
+        
+        const primaryColor = new THREE.Color(wonderData.color);
+        const secondaryColor = new THREE.Color(wonderData.secondaryColor);
+        
+        // 创建径向爆炸纹理
+        const gradient = context.createRadialGradient(256, 256, 50, 256, 256, 256);
+        gradient.addColorStop(0, `rgba(${Math.floor(secondaryColor.r * 255)}, ${Math.floor(secondaryColor.g * 255)}, ${Math.floor(secondaryColor.b * 255)}, 0.9)`);
+        gradient.addColorStop(0.3, `rgba(${Math.floor(primaryColor.r * 255)}, ${Math.floor(primaryColor.g * 255)}, ${Math.floor(primaryColor.b * 255)}, 0.7)`);
+        gradient.addColorStop(0.8, `rgba(${Math.floor(primaryColor.r * 255)}, ${Math.floor(primaryColor.g * 255)}, ${Math.floor(primaryColor.b * 255)}, 0.3)`);
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 512, 512);
+        
+        // 添加射线状结构
+        context.strokeStyle = `rgba(${Math.floor(secondaryColor.r * 255)}, ${Math.floor(secondaryColor.g * 255)}, ${Math.floor(secondaryColor.b * 255)}, 0.6)`;
+        context.lineWidth = 2;
+        for (let i = 0; i < 20; i++) {
+            const angle = (i / 20) * Math.PI * 2;
+            context.beginPath();
+            context.moveTo(256, 256);
+            context.lineTo(256 + Math.cos(angle) * 256, 256 + Math.sin(angle) * 256);
+            context.stroke();
+        }
+        
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    createEmissionNebulaTexture(wonderData) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const context = canvas.getContext('2d');
+        
+        const primaryColor = new THREE.Color(wonderData.color);
+        const secondaryColor = new THREE.Color(wonderData.secondaryColor);
+        
+        // 创建不规则的发射区域
+        for (let i = 0; i < 15; i++) {
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const radius = 30 + Math.random() * 80;
+            
+            const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
+            gradient.addColorStop(0, `rgba(${Math.floor(primaryColor.r * 255)}, ${Math.floor(primaryColor.g * 255)}, ${Math.floor(primaryColor.b * 255)}, 0.8)`);
+            gradient.addColorStop(0.6, `rgba(${Math.floor(secondaryColor.r * 255)}, ${Math.floor(secondaryColor.g * 255)}, ${Math.floor(secondaryColor.b * 255)}, 0.4)`);
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            
+            context.fillStyle = gradient;
+            context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+        }
+        
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    // 辅助方法
+    createShockFront(group, wonderData) {
+        const shockGeometry = new THREE.SphereGeometry(wonderData.size * 1.2, 32, 32);
+        const shockMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.secondaryColor,
+            transparent: true,
+            opacity: 0.3,
+            wireframe: true
+        });
+        
+        const shock = new THREE.Mesh(shockGeometry, shockMaterial);
+        group.add(shock);
+        
+        shock.userData = { expandRate: 0.001 };
+    }
+
+    createFilamentaryStructure(group, wonderData) {
+        for (let i = 0; i < 10; i++) {
+            const points = [];
+            const segmentCount = 20;
+            
+            for (let j = 0; j <= segmentCount; j++) {
+                const t = j / segmentCount;
+                const angle = i * Math.PI * 0.4;
+                const radius = wonderData.size * (0.3 + t * 0.7);
+                
+                points.push(new THREE.Vector3(
+                    Math.cos(angle + t * Math.PI) * radius,
+                    (Math.random() - 0.5) * wonderData.size * 0.2,
+                    Math.sin(angle + t * Math.PI) * radius
+                ));
+            }
+            
+            const filamentGeometry = new THREE.TubeGeometry(
+                new THREE.CatmullRomCurve3(points),
+                segmentCount,
+                wonderData.size * 0.005,
+                4,
+                false
+            );
+            
+            const filamentMaterial = new THREE.MeshBasicMaterial({
+                color: wonderData.secondaryColor,
+                transparent: true,
+                opacity: 0.6,
+                emissive: wonderData.secondaryColor,
+                emissiveIntensity: 0.2
+            });
+            
+            const filament = new THREE.Mesh(filamentGeometry, filamentMaterial);
+            group.add(filament);
+        }
+    }
+
+    createCompactRemnant(group, wonderData) {
+        const remnantGeometry = new THREE.SphereGeometry(wonderData.size * 0.05, 8, 8);
+        const remnantMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            emissive: 0xFFFFFF,
+            emissiveIntensity: 1
+        });
+        
+        const remnant = new THREE.Mesh(remnantGeometry, remnantMaterial);
+        group.add(remnant);
+        
+        // 添加吸积盘
+        const diskGeometry = new THREE.RingGeometry(wonderData.size * 0.1, wonderData.size * 0.3, 16);
+        const diskMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.7,
+            side: THREE.DoubleSide
+        });
+        
+        const disk = new THREE.Mesh(diskGeometry, diskMaterial);
+        disk.rotation.x = Math.PI / 2;
+        group.add(disk);
+    }
+
+    createHIIRegions(group, wonderData) {
+        const regionCount = 5;
+        for (let i = 0; i < regionCount; i++) {
+            const regionGeometry = new THREE.SphereGeometry(wonderData.size * 0.3, 16, 16);
+            const regionMaterial = new THREE.MeshBasicMaterial({
+                color: wonderData.secondaryColor,
+                transparent: true,
+                opacity: 0.4,
+                emissive: wonderData.secondaryColor,
+                emissiveIntensity: 0.2
+            });
+            
+            const region = new THREE.Mesh(regionGeometry, regionMaterial);
+            region.position.set(
+                (Math.random() - 0.5) * wonderData.size,
+                (Math.random() - 0.5) * wonderData.size,
+                (Math.random() - 0.5) * wonderData.size
+            );
+            
+            group.add(region);
+        }
+    }
+
+    createDustLanes(group, wonderData) {
+        for (let i = 0; i < 3; i++) {
+            const laneGeometry = new THREE.BoxGeometry(
+                wonderData.size * 1.5,
+                wonderData.size * 0.05,
+                wonderData.size * 0.2
+            );
+            const laneMaterial = new THREE.MeshBasicMaterial({
+                color: 0x654321,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            const lane = new THREE.Mesh(laneGeometry, laneMaterial);
+            lane.rotation.y = (i / 3) * Math.PI * 2;
+            lane.rotation.z = (Math.random() - 0.5) * 0.5;
+            group.add(lane);
+        }
+    }
+
+    createNebulaRings(group, wonderData) {
+        const ringCount = 3;
+        for (let i = 0; i < ringCount; i++) {
+            const innerRadius = wonderData.size * (0.3 + i * 0.3);
+            const outerRadius = wonderData.size * (0.5 + i * 0.3);
+            
+            const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 32);
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: i === 0 ? wonderData.secondaryColor : wonderData.color,
+                transparent: true,
+                opacity: 0.6 - i * 0.1,
+                side: THREE.DoubleSide
+            });
+            
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.rotation.x = Math.PI / 2;
+            group.add(ring);
+        }
+    }
+
+    createCentralWhiteDwarf(group, wonderData) {
+        const dwarfGeometry = new THREE.SphereGeometry(wonderData.size * 0.08, 8, 8);
+        const dwarfMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            emissive: 0xFFFFFF,
+            emissiveIntensity: 0.8
+        });
+        
+        const dwarf = new THREE.Mesh(dwarfGeometry, dwarfMaterial);
+        group.add(dwarf);
+        
+        // 白矮星光晕
+        const glowGeometry = new THREE.SphereGeometry(wonderData.size * 0.2, 16, 16);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.BackSide
+        });
+        
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        group.add(glow);
+    }
+
+    createNebulaEnvelope(group, wonderData) {
+        const envelopeGeometry = new THREE.SphereGeometry(wonderData.size * 1.5, 32, 32);
+        const envelopeTexture = this.createEmissionNebulaTexture(wonderData);
+        const envelopeMaterial = new THREE.MeshBasicMaterial({
+            map: envelopeTexture,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+        });
+        
+        const envelope = new THREE.Mesh(envelopeGeometry, envelopeMaterial);
+        group.add(envelope);
+    }
+
+    createNebulaEdgeGlow(group, wonderData) {
+        const glowGeometry = new THREE.SphereGeometry(wonderData.size * 1.1, 24, 24);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.2,
+            side: THREE.BackSide
+        });
+        
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        group.add(glow);
+    }
+
     animate() {
         requestAnimationFrame(() => this.animate());
 
@@ -1415,6 +2259,9 @@ class SolarSystem {
 
         // 更新太阳表面活动
         this.updateSunActivity();
+        
+        // 更新宇宙奇观
+        this.updateCosmicWonders();
     }
 
     updateSunActivity() {
@@ -1500,6 +2347,69 @@ class SolarSystem {
             this.sunLights.main.intensity = mainIntensity;
             this.sunLights.atmosphere.intensity = atmIntensity;
         }
+    }
+
+    updateCosmicWonders() {
+        if (!this.cosmicWonders) return;
+        
+        this.cosmicWonders.forEach(wonder => {
+            // 轻微旋转动画
+            if (wonder.userData.rotationSpeed) {
+                wonder.rotation.y += wonder.userData.rotationSpeed;
+            }
+            
+            // 特殊动画效果
+            wonder.children.forEach(child => {
+                // 更新恒星风粒子
+                if (child.userData && child.userData.velocities) {
+                    const positions = child.geometry.attributes.position.array;
+                    const velocities = child.userData.velocities;
+                    const maxDistance = child.userData.maxDistance;
+                    
+                    for (let i = 0; i < velocities.length; i++) {
+                        const index = i * 3;
+                        positions[index] += velocities[i].x;
+                        positions[index + 1] += velocities[i].y;
+                        positions[index + 2] += velocities[i].z;
+                        
+                        // 重置超出范围的粒子
+                        const distance = Math.sqrt(
+                            positions[index] * positions[index] +
+                            positions[index + 1] * positions[index + 1] +
+                            positions[index + 2] * positions[index + 2]
+                        );
+                        
+                        if (distance > maxDistance) {
+                            positions[index] = 0;
+                            positions[index + 1] = 0;
+                            positions[index + 2] = 0;
+                        }
+                    }
+                    
+                    child.geometry.attributes.position.needsUpdate = true;
+                }
+                
+                // 更新激波前沿扩张
+                if (child.userData && child.userData.expandRate) {
+                    child.scale.addScalar(child.userData.expandRate);
+                    
+                    // 限制最大扩张
+                    if (child.scale.x > 2) {
+                        child.scale.setScalar(1);
+                    }
+                }
+                
+                // 星云发光效果闪烁
+                if (child.material && child.material.emissiveIntensity !== undefined) {
+                    child.material.emissiveIntensity = 0.1 + Math.sin(this.time * 2) * 0.05;
+                }
+                
+                // 行星状星云环的旋转
+                if (child.geometry && child.geometry.type === 'RingGeometry') {
+                    child.rotation.z += 0.001;
+                }
+            });
+        });
     }
 
     onWindowResize() {
