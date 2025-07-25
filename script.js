@@ -2219,53 +2219,97 @@ class SolarSystem {
     }
 
     createPillarOfCreation(group, wonderData, index) {
+        // 根据创生之柱的具体描述创建更真实的结构
         const pillarHeight = wonderData.size * (0.8 + Math.random() * 0.6);
         const pillarRadius = wonderData.size * 0.15;
         
-        // 支柱主体 - 使用圆锥体模拟支柱形状
-        const pillarGeometry = new THREE.ConeGeometry(pillarRadius, pillarHeight, 16, 8);
+        // 创建更复杂的支柱形状，模拟真实创生之柱的分叉结构
+        const pillarGroup = new THREE.Group();
+        
+        // 主支柱
+        const mainPillarGeometry = new THREE.CylinderGeometry(
+            pillarRadius * 0.7, 
+            pillarRadius, 
+            pillarHeight * 0.7, 
+            16, 
+            8
+        );
         const pillarTexture = this.createPillarTexture(wonderData);
-        const pillarMaterial = new THREE.MeshBasicMaterial({
+        const mainPillarMaterial = new THREE.MeshBasicMaterial({
             map: pillarTexture,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.85,
             side: THREE.DoubleSide
         });
         
-        const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
+        const mainPillar = new THREE.Mesh(mainPillarGeometry, mainPillarMaterial);
+        mainPillar.position.y = pillarHeight * 0.35;
+        pillarGroup.add(mainPillar);
+        
+        // 顶部的分叉结构
+        const tipCount = 2 + Math.floor(Math.random() * 2); // 2-3个分叉
+        for (let i = 0; i < tipCount; i++) {
+            const tipHeight = pillarHeight * (0.2 + Math.random() * 0.15);
+            const tipRadius = pillarRadius * (0.4 + Math.random() * 0.3);
+            
+            const tipGeometry = new THREE.ConeGeometry(tipRadius, tipHeight, 12, 6);
+            const tipMaterial = new THREE.MeshBasicMaterial({
+                map: pillarTexture,
+                transparent: true,
+                opacity: 0.8,
+                side: THREE.DoubleSide
+            });
+            
+            const tip = new THREE.Mesh(tipGeometry, tipMaterial);
+            
+            // 分布在顶部周围
+            const angle = (i / tipCount) * Math.PI * 2 + Math.random() * 0.5;
+            const distance = pillarRadius * 0.5;
+            tip.position.set(
+                Math.cos(angle) * distance,
+                pillarHeight * 0.85 + tipHeight * 0.5,
+                Math.sin(angle) * distance
+            );
+            
+            // 随机倾斜角度
+            tip.rotation.x = (Math.random() - 0.5) * 0.4;
+            tip.rotation.z = (Math.random() - 0.5) * 0.4;
+            
+            pillarGroup.add(tip);
+            
+            // 在分叉顶端添加新生恒星
+            const newbornStarGeometry = new THREE.SphereGeometry(tipRadius * 0.6, 8, 8);
+            const newbornStarMaterial = new THREE.MeshBasicMaterial({
+                color: wonderData.secondaryColor,
+                transparent: true,
+                opacity: 0.9,
+                emissive: wonderData.secondaryColor,
+                emissiveIntensity: 0.4
+            });
+            
+            const newbornStar = new THREE.Mesh(newbornStarGeometry, newbornStarMaterial);
+            newbornStar.position.copy(tip.position);
+            newbornStar.position.y += tipHeight * 0.4;
+            pillarGroup.add(newbornStar);
+            
+            // 添加从新生恒星发出的恒星风
+            this.createStellarWinds(pillarGroup, newbornStar.position, wonderData);
+        }
         
         // 随机放置支柱
         const angle = (index / wonderData.pillars) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
         const distance = wonderData.size * 0.3;
-        pillar.position.set(
+        pillarGroup.position.set(
             Math.cos(angle) * distance,
             Math.random() * wonderData.size * 0.2,
             Math.sin(angle) * distance
         );
         
         // 随机旋转
-        pillar.rotation.x = (Math.random() - 0.5) * 0.3;
-        pillar.rotation.z = (Math.random() - 0.5) * 0.3;
+        pillarGroup.rotation.x = (Math.random() - 0.5) * 0.3;
+        pillarGroup.rotation.z = (Math.random() - 0.5) * 0.3;
         
-        group.add(pillar);
-        
-        // 支柱顶端的恒星形成区域
-        const tipGeometry = new THREE.SphereGeometry(pillarRadius * 0.8, 8, 8);
-        const tipMaterial = new THREE.MeshBasicMaterial({
-            color: wonderData.secondaryColor,
-            transparent: true,
-            opacity: 0.9,
-            emissive: wonderData.secondaryColor,
-            emissiveIntensity: 0.3
-        });
-        
-        const tip = new THREE.Mesh(tipGeometry, tipMaterial);
-        tip.position.copy(pillar.position);
-        tip.position.y += pillarHeight * 0.4;
-        group.add(tip);
-        
-        // 从支柱射出的恒星风
-        this.createStellarWinds(group, tip.position, wonderData);
+        group.add(pillarGroup);
     }
 
     createNewbornStars(group, wonderData) {
@@ -2360,16 +2404,19 @@ class SolarSystem {
     }
 
     createStellarWinds(group, position, wonderData) {
-        // 从新生恒星发出的恒星风
-        const windCount = 8;
+        // 创建从新生恒星发出的恒星风，模拟创生之柱中恒星风侵蚀柱子的效果
+        const windCount = 15; // 增加粒子数量以获得更好的视觉效果
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(windCount * 3);
+        const colors = new Float32Array(windCount * 3);
         const velocities = [];
+        const maxDistance = wonderData.size * 0.5; // 限制风的范围
         
         for (let i = 0; i < windCount; i++) {
+            // 创建向外扩散的方向
             const direction = new THREE.Vector3(
                 (Math.random() - 0.5) * 2,
-                Math.random(),
+                Math.random() * 0.5, // 主要向上扩散
                 (Math.random() - 0.5) * 2
             ).normalize();
             
@@ -2377,20 +2424,41 @@ class SolarSystem {
             positions[i * 3 + 1] = position.y;
             positions[i * 3 + 2] = position.z;
             
-            velocities.push(direction.multiplyScalar(0.5));
+            // 根据创生之柱的观测数据设置颜色
+            // 年轻恒星的恒星风通常呈现蓝绿色或橙红色
+            const windColor = new THREE.Color();
+            if (Math.random() < 0.5) {
+                windColor.setRGB(0.4, 0.8, 1.0); // 蓝绿色
+            } else {
+                windColor.setRGB(1.0, 0.6, 0.2); // 橙红色
+            }
+            
+            colors[i * 3] = windColor.r;
+            colors[i * 3 + 1] = windColor.g;
+            colors[i * 3 + 2] = windColor.b;
+            
+            // 随机速度
+            velocities.push(direction.multiplyScalar(0.3 + Math.random() * 0.4));
         }
         
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         
         const material = new THREE.PointsMaterial({
-            color: wonderData.secondaryColor,
-            size: 1,
+            size: 2,
             transparent: true,
-            opacity: 0.6
+            opacity: 0.7,
+            vertexColors: true,
+            sizeAttenuation: true,
+            blending: THREE.AdditiveBlending
         });
         
         const winds = new THREE.Points(geometry, material);
-        winds.userData = { velocities, maxDistance: wonderData.size * 0.5 };
+        winds.userData = {
+            velocities: velocities,
+            maxDistance: maxDistance
+        };
+        
         group.add(winds);
     }
 
@@ -2892,31 +2960,89 @@ class SolarSystem {
         canvas.height = 512;
         const context = canvas.getContext('2d');
         
-        // 创建复杂的星云纹理
-        const gradient = context.createRadialGradient(256, 256, 0, 256, 256, 256);
+        // 创建更复杂的星云纹理，模拟鹰状星云和创生之柱的真实外观
         const primaryColor = new THREE.Color(wonderData.color);
         const secondaryColor = new THREE.Color(wonderData.secondaryColor);
         
-        gradient.addColorStop(0, `rgba(${Math.floor(secondaryColor.r * 255)}, ${Math.floor(secondaryColor.g * 255)}, ${Math.floor(secondaryColor.b * 255)}, 0.8)`);
-        gradient.addColorStop(0.4, `rgba(${Math.floor(primaryColor.r * 255)}, ${Math.floor(primaryColor.g * 255)}, ${Math.floor(primaryColor.b * 255)}, 0.6)`);
-        gradient.addColorStop(0.8, `rgba(${Math.floor(primaryColor.r * 255)}, ${Math.floor(primaryColor.g * 255)}, ${Math.floor(primaryColor.b * 255)}, 0.3)`);
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        // 创建多层次的星云效果
+        // 中心较亮（被新生恒星照亮），边缘较暗（冷尘埃）
+        const gradient = context.createRadialGradient(256, 256, 0, 256, 256, 256);
+        
+        // 根据哈勃和韦伯望远镜的观测数据设置颜色
+        // 哈勃图像：深棕色冷尘埃 + 蓝绿色电离气体 + 红色硫离子
+        // 韦伯图像：橙红色温暖尘埃 + 红色新生恒星
+        const coldDust = new THREE.Color(0x4B0082);    // 深紫色（冷尘埃）
+        const warmDust = new THREE.Color(0xFF6347);    // 橙红色（温暖尘埃）
+        const ionizedGas = new THREE.Color(0x00BFFF);  // 深天蓝色（电离气体）
+        
+        gradient.addColorStop(0, `rgba(${Math.floor(warmDust.r * 255)}, ${Math.floor(warmDust.g * 255)}, ${Math.floor(warmDust.b * 255)}, 0.9)`);
+        gradient.addColorStop(0.3, `rgba(${Math.floor(secondaryColor.r * 255)}, ${Math.floor(secondaryColor.g * 255)}, ${Math.floor(secondaryColor.b * 255)}, 0.7)`);
+        gradient.addColorStop(0.6, `rgba(${Math.floor(primaryColor.r * 255)}, ${Math.floor(primaryColor.g * 255)}, ${Math.floor(primaryColor.b * 255)}, 0.5)`);
+        gradient.addColorStop(0.8, `rgba(${Math.floor(coldDust.r * 200)}, ${Math.floor(coldDust.g * 200)}, ${Math.floor(coldDust.b * 200)}, 0.3)`);
+        gradient.addColorStop(1, `rgba(${Math.floor(coldDust.r * 100)}, ${Math.floor(coldDust.g * 100)}, ${Math.floor(coldDust.b * 100)}, 0.1)`);
         
         context.fillStyle = gradient;
         context.fillRect(0, 0, 512, 512);
         
-        // 添加湍流和气体团块
-        for (let i = 0; i < 50; i++) {
+        // 添加不规则的气体团块和尘埃带
+        for (let i = 0; i < 80; i++) {
             const x = Math.random() * 512;
             const y = Math.random() * 512;
-            const radius = 10 + Math.random() * 30;
+            const radius = 5 + Math.random() * 25;
             
-            const localGradient = context.createRadialGradient(x, y, 0, x, y, radius);
-            localGradient.addColorStop(0, `rgba(${Math.floor(secondaryColor.r * 255)}, ${Math.floor(secondaryColor.g * 255)}, ${Math.floor(secondaryColor.b * 255)}, 0.6)`);
-            localGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            // 随机选择气体或尘埃的颜色
+            let blobColor;
+            const type = Math.random();
+            if (type < 0.4) {
+                // 冷尘埃
+                blobColor = `rgba(${Math.floor(coldDust.r * 150)}, ${Math.floor(coldDust.g * 150)}, ${Math.floor(coldDust.b * 150)}, ${0.3 + Math.random() * 0.4})`;
+            } else if (type < 0.7) {
+                // 温暖尘埃
+                blobColor = `rgba(${Math.floor(warmDust.r * 200)}, ${Math.floor(warmDust.g * 200)}, ${Math.floor(warmDust.b * 200)}, ${0.2 + Math.random() * 0.3})`;
+            } else if (type < 0.9) {
+                // 电离气体
+                blobColor = `rgba(${Math.floor(ionizedGas.r * 200)}, ${Math.floor(ionizedGas.g * 200)}, ${Math.floor(ionizedGas.b * 200)}, ${0.2 + Math.random() * 0.3})`;
+            } else {
+                // 新生恒星区域
+                blobColor = `rgba(${Math.floor(secondaryColor.r * 255)}, ${Math.floor(secondaryColor.g * 255)}, ${Math.floor(secondaryColor.b * 255)}, ${0.4 + Math.random() * 0.3})`;
+            }
             
-            context.fillStyle = localGradient;
-            context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            context.fillStyle = blobColor;
+            
+            // 创建不规则形状
+            context.beginPath();
+            context.arc(x, y, radius, 0, Math.PI * 2);
+            context.fill();
+            
+            // 添加一些细节纹理
+            if (Math.random() < 0.3) {
+                context.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                context.lineWidth = 1;
+                context.beginPath();
+                context.arc(x + (Math.random() - 0.5) * radius, y + (Math.random() - 0.5) * radius, radius * 0.3, 0, Math.PI * 2);
+                context.stroke();
+            }
+        }
+        
+        // 添加纤维状结构，模拟真实星云中的气体流动
+        context.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        context.lineWidth = 1;
+        for (let i = 0; i < 40; i++) {
+            context.beginPath();
+            const startX = Math.random() * 512;
+            const startY = Math.random() * 512;
+            context.moveTo(startX, startY);
+            
+            // 创建弯曲的纤维状结构
+            for (let j = 0; j < 3; j++) {
+                const ctrlX = startX + (Math.random() - 0.5) * 100;
+                const ctrlY = startY + (Math.random() - 0.5) * 100;
+                const endX = startX + (Math.random() - 0.5) * 150;
+                const endY = startY + (Math.random() - 0.5) * 150;
+                context.bezierCurveTo(ctrlX, ctrlY, ctrlX + 20, ctrlY + 20, endX, endY);
+            }
+            
+            context.stroke();
         }
         
         return new THREE.CanvasTexture(canvas);
@@ -2928,24 +3054,69 @@ class SolarSystem {
         canvas.height = 512;
         const context = canvas.getContext('2d');
         
-        // 创建支柱纹理 - 从顶部明亮到底部暗淡
+        // 创建更真实的创生之柱纹理 - 模拟哈勃和韦伯望远镜的观测效果
+        // 底部较暗（冷尘埃），顶部较亮（被恒星照亮）
         const gradient = context.createLinearGradient(0, 0, 0, 512);
-        const color = new THREE.Color(wonderData.color);
         
-        gradient.addColorStop(0, `rgba(${Math.floor(color.r * 255)}, ${Math.floor(color.g * 255)}, ${Math.floor(color.b * 255)}, 0.9)`);
-        gradient.addColorStop(0.7, `rgba(${Math.floor(color.r * 200)}, ${Math.floor(color.g * 200)}, ${Math.floor(color.b * 200)}, 0.7)`);
-        gradient.addColorStop(1, `rgba(${Math.floor(color.r * 100)}, ${Math.floor(color.g * 100)}, ${Math.floor(color.b * 100)}, 0.5)`);
+        // 根据哈勃和韦伯的观测数据设置颜色
+        // 哈勃：深棕色/黑色冷尘埃 + 蓝绿色电离气体
+        // 韦伯：橙红色温暖尘埃 + 红色新生恒星
+        const darkColor = new THREE.Color(0x2F1B0A); // 深棕色（冷尘埃）
+        const warmColor = new THREE.Color(0xCD5C5C); // 橙红色（温暖尘埃）
+        const ionizedColor = new THREE.Color(0x4682B4); // 钢蓝色（电离气体）
+        
+        gradient.addColorStop(0, `rgba(${Math.floor(warmColor.r * 255)}, ${Math.floor(warmColor.g * 255)}, ${Math.floor(warmColor.b * 255)}, 0.9)`);
+        gradient.addColorStop(0.3, `rgba(${Math.floor(warmColor.r * 200)}, ${Math.floor(warmColor.g * 200)}, ${Math.floor(warmColor.b * 200)}, 0.8)`);
+        gradient.addColorStop(0.7, `rgba(${Math.floor(darkColor.r * 150)}, ${Math.floor(darkColor.g * 150)}, ${Math.floor(darkColor.b * 150)}, 0.7)`);
+        gradient.addColorStop(1, `rgba(${Math.floor(darkColor.r * 100)}, ${Math.floor(darkColor.g * 100)}, ${Math.floor(darkColor.b * 100)}, 0.6)`);
         
         context.fillStyle = gradient;
         context.fillRect(0, 0, 256, 512);
         
-        // 添加细节纹理
-        context.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        context.lineWidth = 1;
-        for (let i = 0; i < 20; i++) {
+        // 添加尘埃纹理和气体结构
+        for (let i = 0; i < 50; i++) {
+            const x = Math.random() * 256;
+            const y = Math.random() * 512;
+            const radius = 2 + Math.random() * 8;
+            
+            // 随机选择颜色：深色尘埃或电离气体
+            let color;
+            const colorChoice = Math.random();
+            if (colorChoice < 0.6) {
+                // 深色尘埃
+                color = `rgba(${Math.floor(darkColor.r * 100)}, ${Math.floor(darkColor.g * 100)}, ${Math.floor(darkColor.b * 100)}, 0.7)`;
+            } else if (colorChoice < 0.8) {
+                // 温暖尘埃
+                color = `rgba(${Math.floor(warmColor.r * 200)}, ${Math.floor(warmColor.g * 200)}, ${Math.floor(warmColor.b * 200)}, 0.6)`;
+            } else {
+                // 电离气体
+                color = `rgba(${Math.floor(ionizedColor.r * 200)}, ${Math.floor(ionizedColor.g * 200)}, ${Math.floor(ionizedColor.b * 200)}, 0.5)`;
+            }
+            
+            context.fillStyle = color;
             context.beginPath();
-            context.moveTo(Math.random() * 256, 0);
-            context.lineTo(Math.random() * 256, 512);
+            context.arc(x, y, radius, 0, Math.PI * 2);
+            context.fill();
+        }
+        
+        // 添加细小的纤维状结构
+        context.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        context.lineWidth = 1;
+        for (let i = 0; i < 30; i++) {
+            context.beginPath();
+            const startX = Math.random() * 256;
+            const startY = Math.random() * 512;
+            context.moveTo(startX, startY);
+            
+            // 创建弯曲的纤维状结构
+            for (let j = 0; j < 5; j++) {
+                const ctrlX = startX + (Math.random() - 0.5) * 50;
+                const ctrlY = startY + (Math.random() - 0.5) * 50;
+                const endX = startX + (Math.random() - 0.5) * 100;
+                const endY = startY + (Math.random() - 0.5) * 100;
+                context.quadraticCurveTo(ctrlX, ctrlY, endX, endY);
+            }
+            
             context.stroke();
         }
         
