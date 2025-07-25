@@ -11,6 +11,11 @@ class SolarSystem {
         this.orbits = [];
         this.asteroidBelt = [];
         this.kuiperBelt = [];
+        this.oortCloud = []; // 奥尔特云天体
+        this.longPeriodComets = []; // 长周期彗星
+        
+        // 奥尔特云可见性控制
+        this.oortCloudVisible = true;
         
         // 时间变量
         this.time = 0;
@@ -37,7 +42,7 @@ class SolarSystem {
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.1;
         this.controls.minDistance = 5;
-        this.controls.maxDistance = 500;
+        this.controls.maxDistance = 2000; // 增加最大距离以观察奥尔特云
 
         // 添加星空背景
         this.createStarField();
@@ -209,6 +214,15 @@ class SolarSystem {
 
         // 创建柯伊伯带（海王星外侧）
         this.createKuiperBelt(130, 180, 1500);
+
+        // 创建奥尔特云（太阳系最外层）
+        this.createOortCloud();
+
+        // 创建奥尔特云边界指示器
+        this.createOortCloudBoundaries();
+
+        // 创建长周期彗星
+        this.createLongPeriodComets();
 
         // 创建轨道线
         this.createOrbits(celestialData);
@@ -926,6 +940,330 @@ class SolarSystem {
             
             this.scene.add(kuiperObject);
             this.kuiperBelt.push(kuiperObject);
+        }
+    }
+
+    createOortCloud() {
+        // 奥尔特云分为内外两层
+        // 内奥尔特云：2000-20000 AU（简化为 300-800 单位）
+        // 外奥尔特云：20000+ AU（简化为 800-1500 单位）
+        
+        // 创建内奥尔特云（盘状结构）
+        this.createInnerOortCloud(300, 800, 3000);
+        
+        // 创建外奥尔特云（球形结构）
+        this.createOuterOortCloud(800, 1500, 5000);
+    }
+
+    createInnerOortCloud(innerRadius, outerRadius, count) {
+        for (let i = 0; i < count; i++) {
+            const distance = innerRadius + Math.random() * (outerRadius - innerRadius);
+            const angle = Math.random() * Math.PI * 2;
+            // 内奥尔特云呈盘状，垂直分布较小
+            const height = (Math.random() - 0.5) * 50; 
+            
+            // 彗星核大小 - 非常小的冰质天体
+            const size = Math.random() * 0.08 + 0.02;
+            const geometry = new THREE.IcosahedronGeometry(size, 0);
+            
+            // 冰质彗星核材质 - 偏蓝白色调
+            const hue = 0.55 + Math.random() * 0.15; // 蓝到青色
+            const saturation = 0.2 + Math.random() * 0.3;
+            const lightness = 0.4 + Math.random() * 0.4;
+            
+            const material = new THREE.MeshLambertMaterial({
+                color: new THREE.Color().setHSL(hue, saturation, lightness),
+                transparent: true,
+                opacity: 0.6 + Math.random() * 0.3
+            });
+            
+            const cometNucleus = new THREE.Mesh(geometry, material);
+            
+            // 位置 - 在盘状结构中分布
+            cometNucleus.position.x = Math.cos(angle) * distance;
+            cometNucleus.position.z = Math.sin(angle) * distance;
+            cometNucleus.position.y = height;
+            
+            // 随机旋转
+            cometNucleus.rotation.x = Math.random() * Math.PI * 2;
+            cometNucleus.rotation.y = Math.random() * Math.PI * 2;
+            cometNucleus.rotation.z = Math.random() * Math.PI * 2;
+            
+            // 存储轨道信息 - 极慢的轨道运动
+            cometNucleus.userData = {
+                distance: distance,
+                angle: angle,
+                orbitSpeed: 0.00001 + Math.random() * 0.00001, // 极慢的公转
+                rotationSpeed: Math.random() * 0.001, // 缓慢自转
+                rotationAxis: new THREE.Vector3(
+                    Math.random() - 0.5,
+                    Math.random() - 0.5,
+                    Math.random() - 0.5
+                ).normalize(),
+                layer: 'inner_oort',
+                perturbation: Math.random() * 0.02 // 微小的轨道扰动
+            };
+            
+            // 偶尔添加微弱的彗发效果（模拟受到扰动的彗星）
+            if (Math.random() < 0.001) {
+                this.addCometTail(cometNucleus, size);
+            }
+            
+            this.scene.add(cometNucleus);
+            this.oortCloud.push(cometNucleus);
+        }
+    }
+
+    createOuterOortCloud(innerRadius, outerRadius, count) {
+        for (let i = 0; i < count; i++) {
+            const distance = innerRadius + Math.random() * (outerRadius - innerRadius);
+            
+            // 球形分布 - 使用球坐标
+            const theta = Math.random() * Math.PI * 2; // 经度
+            const phi = Math.acos(2 * Math.random() - 1); // 纬度（均匀球面分布）
+            
+            // 彗星核大小
+            const size = Math.random() * 0.06 + 0.01;
+            const geometry = new THREE.IcosahedronGeometry(size, 0);
+            
+            // 更加暗淡的冰质材质
+            const hue = 0.55 + Math.random() * 0.2;
+            const saturation = 0.1 + Math.random() * 0.2;
+            const lightness = 0.2 + Math.random() * 0.3;
+            
+            const material = new THREE.MeshLambertMaterial({
+                color: new THREE.Color().setHSL(hue, saturation, lightness),
+                transparent: true,
+                opacity: 0.3 + Math.random() * 0.4
+            });
+            
+            const cometNucleus = new THREE.Mesh(geometry, material);
+            
+            // 球形坐标转换为笛卡尔坐标
+            cometNucleus.position.x = distance * Math.sin(phi) * Math.cos(theta);
+            cometNucleus.position.y = distance * Math.cos(phi);
+            cometNucleus.position.z = distance * Math.sin(phi) * Math.sin(theta);
+            
+            // 随机旋转
+            cometNucleus.rotation.x = Math.random() * Math.PI * 2;
+            cometNucleus.rotation.y = Math.random() * Math.PI * 2;
+            cometNucleus.rotation.z = Math.random() * Math.PI * 2;
+            
+            // 存储轨道信息
+            cometNucleus.userData = {
+                distance: distance,
+                theta: theta,
+                phi: phi,
+                orbitSpeed: 0.000005 + Math.random() * 0.000005, // 极其缓慢的运动
+                rotationSpeed: Math.random() * 0.0005,
+                rotationAxis: new THREE.Vector3(
+                    Math.random() - 0.5,
+                    Math.random() - 0.5,
+                    Math.random() - 0.5
+                ).normalize(),
+                layer: 'outer_oort',
+                perturbation: Math.random() * 0.01,
+                // 记录受恒星和银河系影响的轨道变化
+                stellarInfluence: Math.random() * 0.001,
+                galacticTide: Math.random() * 0.0005
+            };
+            
+            // 极少数添加彗发效果
+            if (Math.random() < 0.0005) {
+                this.addCometTail(cometNucleus, size);
+            }
+            
+            this.scene.add(cometNucleus);
+            this.oortCloud.push(cometNucleus);
+        }
+    }
+
+    addCometTail(cometNucleus, nucleusSize) {
+        // 创建简单的彗发效果
+        const tailLength = nucleusSize * 20 + Math.random() * nucleusSize * 30;
+        const tailGeometry = new THREE.ConeGeometry(nucleusSize * 2, tailLength, 6);
+        
+        const tailMaterial = new THREE.MeshBasicMaterial({
+            color: 0x87CEEB,
+            transparent: true,
+            opacity: 0.1 + Math.random() * 0.1,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+        
+        // 彗尾指向远离太阳的方向
+        const directionToSun = new THREE.Vector3(0, 0, 0).sub(cometNucleus.position).normalize();
+        tail.lookAt(directionToSun);
+        tail.rotateX(Math.PI); // 调整方向
+        
+        tail.position.copy(cometNucleus.position);
+        tail.position.add(directionToSun.multiplyScalar(-tailLength * 0.5));
+        
+        cometNucleus.userData.tail = tail;
+        this.scene.add(tail);
+    }
+
+    createOortCloudBoundaries() {
+        // 创建内奥尔特云边界指示器
+        const innerBoundaryGeometry = new THREE.RingGeometry(300, 302, 64);
+        const innerBoundaryMaterial = new THREE.MeshBasicMaterial({
+            color: 0x4169E1,
+            transparent: true,
+            opacity: 0.1,
+            side: THREE.DoubleSide
+        });
+        const innerBoundary = new THREE.Mesh(innerBoundaryGeometry, innerBoundaryMaterial);
+        innerBoundary.rotation.x = Math.PI / 2;
+        this.scene.add(innerBoundary);
+
+        const outerInnerBoundaryGeometry = new THREE.RingGeometry(798, 800, 64);
+        const outerInnerBoundary = new THREE.Mesh(outerInnerBoundaryGeometry, innerBoundaryMaterial);
+        outerInnerBoundary.rotation.x = Math.PI / 2;
+        this.scene.add(outerInnerBoundary);
+
+        // 创建外奥尔特云边界指示器（球形）
+        const outerBoundaryGeometry = new THREE.SphereGeometry(1500, 32, 16);
+        const outerBoundaryMaterial = new THREE.MeshBasicMaterial({
+            color: 0x191970,
+            transparent: true,
+            opacity: 0.05,
+            wireframe: true,
+            side: THREE.BackSide
+        });
+        const outerBoundary = new THREE.Mesh(outerBoundaryGeometry, outerBoundaryMaterial);
+        this.scene.add(outerBoundary);
+
+        // 创建一些径向指示线，显示奥尔特云的球形结构
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const points = [
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(Math.cos(angle) * 1500, 0, Math.sin(angle) * 1500),
+                new THREE.Vector3(0, 1500, 0),
+                new THREE.Vector3(0, -1500, 0)
+            ];
+            
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints([points[0], points[1]]);
+            const lineMaterial = new THREE.LineBasicMaterial({
+                color: 0x4169E1,
+                transparent: true,
+                opacity: 0.08
+            });
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            this.scene.add(line);
+        }
+
+        // 垂直方向的指示线
+        for (let i = 0; i < 8; i++) {
+            const phi = (i / 8) * Math.PI;
+            const points = [];
+            for (let j = 0; j <= 32; j++) {
+                const theta = (j / 32) * Math.PI * 2;
+                points.push(new THREE.Vector3(
+                    1500 * Math.sin(phi) * Math.cos(theta),
+                    1500 * Math.cos(phi),
+                    1500 * Math.sin(phi) * Math.sin(theta)
+                ));
+            }
+            
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            const lineMaterial = new THREE.LineBasicMaterial({
+                color: 0x191970,
+                transparent: true,
+                opacity: 0.06
+            });
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            this.scene.add(line);
+        }
+    }
+
+    createLongPeriodComets() {
+        // 创建少数几颗长周期彗星，模拟从奥尔特云进入内太阳系的彗星
+        const cometCount = 5;
+        
+        for (let i = 0; i < cometCount; i++) {
+            // 彗星核
+            const size = Math.random() * 0.3 + 0.1;
+            const nucleusGeometry = new THREE.IcosahedronGeometry(size, 1);
+            const nucleusMaterial = new THREE.MeshLambertMaterial({
+                color: 0x888888,
+                roughness: 0.9
+            });
+            const nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
+            
+            // 彗发（coma）
+            const comaGeometry = new THREE.SphereGeometry(size * 8, 16, 16);
+            const comaMaterial = new THREE.MeshBasicMaterial({
+                color: 0x87CEEB,
+                transparent: true,
+                opacity: 0.1,
+                blending: THREE.AdditiveBlending
+            });
+            const coma = new THREE.Mesh(comaGeometry, comaMaterial);
+            
+            // 彗尾
+            const tailLength = size * 100 + Math.random() * size * 200;
+            const tailGeometry = new THREE.ConeGeometry(size * 3, tailLength, 8);
+            const tailMaterial = new THREE.MeshBasicMaterial({
+                color: 0x87CEEB,
+                transparent: true,
+                opacity: 0.15,
+                blending: THREE.AdditiveBlending
+            });
+            const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+            
+            // 离子尾（蓝色，更直）
+            const ionTailLength = tailLength * 1.5;
+            const ionTailGeometry = new THREE.ConeGeometry(size * 1.5, ionTailLength, 6);
+            const ionTailMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00BFFF,
+                transparent: true,
+                opacity: 0.1,
+                blending: THREE.AdditiveBlending
+            });
+            const ionTail = new THREE.Mesh(ionTailGeometry, ionTailMaterial);
+            
+            // 创建彗星组合体
+            const cometGroup = new THREE.Group();
+            cometGroup.add(nucleus);
+            cometGroup.add(coma);
+            cometGroup.add(tail);
+            cometGroup.add(ionTail);
+            
+            // 高椭圆轨道参数
+            const semiMajorAxis = 500 + Math.random() * 800; // 半长轴
+            const eccentricity = 0.9 + Math.random() * 0.099; // 高偏心率
+            const inclination = Math.random() * Math.PI; // 倾角
+            const longitudeOfAscendingNode = Math.random() * Math.PI * 2;
+            const argumentOfPeriapsis = Math.random() * Math.PI * 2;
+            
+            // 初始位置（从奥尔特云开始）
+            const initialDistance = semiMajorAxis * (1 + eccentricity);
+            const angle = Math.random() * Math.PI * 2;
+            
+            cometGroup.position.x = Math.cos(angle) * initialDistance;
+            cometGroup.position.z = Math.sin(angle) * initialDistance;
+            cometGroup.position.y = (Math.random() - 0.5) * 200;
+            
+            // 存储轨道数据
+            cometGroup.userData = {
+                nucleus: nucleus,
+                coma: coma,
+                tail: tail,
+                ionTail: ionTail,
+                semiMajorAxis: semiMajorAxis,
+                eccentricity: eccentricity,
+                inclination: inclination,
+                longitudeOfAscendingNode: longitudeOfAscendingNode,
+                argumentOfPeriapsis: argumentOfPeriapsis,
+                meanAnomaly: Math.random() * Math.PI * 2,
+                period: Math.sqrt(Math.pow(semiMajorAxis, 3)) * 0.001, // 简化的轨道周期
+                lastUpdate: 0
+            };
+            
+            this.scene.add(cometGroup);
+            this.longPeriodComets.push(cometGroup);
         }
     }
 
@@ -2257,11 +2595,129 @@ class SolarSystem {
             kuiperObject.rotateOnAxis(data.rotationAxis, data.rotationSpeed);
         });
 
+        // 更新奥尔特云
+        this.updateOortCloud();
+
+        // 更新长周期彗星
+        this.updateLongPeriodComets();
+
         // 更新太阳表面活动
         this.updateSunActivity();
         
         // 更新宇宙奇观
         this.updateCosmicWonders();
+    }
+
+    updateOortCloud() {
+        this.oortCloud.forEach(cometNucleus => {
+            const data = cometNucleus.userData;
+            
+            if (data.layer === 'inner_oort') {
+                // 内奥尔特云 - 盘状轨道运动
+                data.angle += data.orbitSpeed;
+                
+                // 添加轨道扰动（模拟恒星引力影响）
+                const perturbation = Math.sin(this.time * data.perturbation) * 0.5;
+                const adjustedDistance = data.distance + perturbation;
+                
+                cometNucleus.position.x = Math.cos(data.angle) * adjustedDistance;
+                cometNucleus.position.z = Math.sin(data.angle) * adjustedDistance;
+                
+                // 垂直位置的微小摆动
+                cometNucleus.position.y += Math.sin(this.time * data.perturbation * 2) * 0.1;
+                
+            } else if (data.layer === 'outer_oort') {
+                // 外奥尔特云 - 球形轨道运动
+                data.theta += data.orbitSpeed;
+                data.phi += data.orbitSpeed * 0.3; // 纬度变化更慢
+                
+                // 添加恒星和银河系潮汐力影响
+                const stellarPerturbation = Math.sin(this.time * data.stellarInfluence) * 2;
+                const galacticPerturbation = Math.cos(this.time * data.galacticTide) * 1;
+                const adjustedDistance = data.distance + stellarPerturbation + galacticPerturbation;
+                
+                // 球坐标转换为笛卡尔坐标
+                cometNucleus.position.x = adjustedDistance * Math.sin(data.phi) * Math.cos(data.theta);
+                cometNucleus.position.y = adjustedDistance * Math.cos(data.phi);
+                cometNucleus.position.z = adjustedDistance * Math.sin(data.phi) * Math.sin(data.theta);
+            }
+            
+            // 自转
+            cometNucleus.rotateOnAxis(data.rotationAxis, data.rotationSpeed);
+            
+            // 更新彗尾位置（如果有）
+            if (data.tail) {
+                const directionToSun = new THREE.Vector3(0, 0, 0).sub(cometNucleus.position).normalize();
+                data.tail.position.copy(cometNucleus.position);
+                data.tail.lookAt(cometNucleus.position.clone().add(directionToSun.multiplyScalar(-1)));
+                
+                // 根据距离太阳的远近调整彗尾透明度
+                const distanceToSun = cometNucleus.position.length();
+                const maxVisibleDistance = 1000;
+                const opacity = Math.max(0, 1 - distanceToSun / maxVisibleDistance) * 0.2;
+                data.tail.material.opacity = opacity;
+            }
+        });
+    }
+
+    updateLongPeriodComets() {
+        this.longPeriodComets.forEach(cometGroup => {
+            const data = cometGroup.userData;
+            
+            // 更新平近点角
+            data.meanAnomaly += 0.001 / data.period;
+            
+            // 简化的椭圆轨道计算
+            const eccentricAnomaly = data.meanAnomaly; // 简化处理
+            const trueAnomaly = eccentricAnomaly;
+            
+            // 计算距离（椭圆轨道）
+            const distance = data.semiMajorAxis * (1 - data.eccentricity * Math.cos(eccentricAnomaly));
+            
+            // 计算位置
+            const x = distance * Math.cos(trueAnomaly + data.argumentOfPeriapsis);
+            const y = distance * Math.sin(trueAnomaly + data.argumentOfPeriapsis) * Math.sin(data.inclination);
+            const z = distance * Math.sin(trueAnomaly + data.argumentOfPeriapsis) * Math.cos(data.inclination);
+            
+            cometGroup.position.set(x, y, z);
+            
+            // 根据距离太阳的远近调整彗发和彗尾的可见性
+            const distanceToSun = cometGroup.position.length();
+            const maxCometActivity = 150; // 彗星活跃的最大距离
+            
+            if (distanceToSun < maxCometActivity) {
+                const activity = Math.max(0, 1 - distanceToSun / maxCometActivity);
+                
+                // 调整彗发透明度和大小
+                data.coma.material.opacity = activity * 0.2;
+                data.coma.scale.setScalar(1 + activity * 2);
+                
+                // 调整彗尾
+                data.tail.material.opacity = activity * 0.15;
+                data.ionTail.material.opacity = activity * 0.1;
+                
+                // 彗尾指向远离太阳的方向
+                const directionToSun = new THREE.Vector3(0, 0, 0).sub(cometGroup.position).normalize();
+                
+                // 尘埃尾稍微弯曲
+                data.tail.lookAt(cometGroup.position.clone().add(directionToSun.multiplyScalar(-1)));
+                data.tail.rotateX(Math.PI / 2);
+                
+                // 离子尾更直
+                data.ionTail.lookAt(cometGroup.position.clone().add(directionToSun.multiplyScalar(-1)));
+                data.ionTail.rotateX(Math.PI / 2);
+                
+            } else {
+                // 远离太阳时，彗发和彗尾几乎看不见
+                data.coma.material.opacity = 0.01;
+                data.tail.material.opacity = 0.01;
+                data.ionTail.material.opacity = 0.01;
+                data.coma.scale.setScalar(0.5);
+            }
+            
+            // 彗核的轻微自转
+            data.nucleus.rotation.y += 0.01;
+        });
     }
 
     updateSunActivity() {
@@ -2417,11 +2873,67 @@ class SolarSystem {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
+
+    // 控制函数
+    focusOnOortCloud() {
+        // 将相机移动到能观察奥尔特云的位置
+        const targetPosition = new THREE.Vector3(1200, 600, 1200);
+        this.animateCameraTo(targetPosition, new THREE.Vector3(0, 0, 0));
+    }
+
+    focusOnSolarSystem() {
+        // 回到太阳系中心视角
+        const targetPosition = new THREE.Vector3(0, 50, 100);
+        this.animateCameraTo(targetPosition, new THREE.Vector3(0, 0, 0));
+    }
+
+    toggleOortCloudVisibility() {
+        this.oortCloudVisible = !this.oortCloudVisible;
+        
+        // 切换奥尔特云天体的可见性
+        this.oortCloud.forEach(obj => {
+            obj.visible = this.oortCloudVisible;
+        });
+        
+        this.longPeriodComets.forEach(comet => {
+            comet.visible = this.oortCloudVisible;
+        });
+    }
+
+    animateCameraTo(targetPosition, targetLookAt) {
+        // 简单的相机动画
+        const startPosition = this.camera.position.clone();
+        const startLookAt = this.controls.target.clone();
+        
+        let progress = 0;
+        const animationDuration = 2000; // 2秒
+        const startTime = Date.now();
+        
+        const animate = () => {
+            const currentTime = Date.now();
+            progress = Math.min((currentTime - startTime) / animationDuration, 1);
+            
+            // 使用缓动函数
+            const easeProgress = progress * progress * (3.0 - 2.0 * progress);
+            
+            // 插值位置
+            this.camera.position.lerpVectors(startPosition, targetPosition, easeProgress);
+            this.controls.target.lerpVectors(startLookAt, targetLookAt, easeProgress);
+            
+            this.controls.update();
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        animate();
+    }
 }
 
 // 初始化太阳系
 document.addEventListener('DOMContentLoaded', () => {
-    new SolarSystem();
+    window.solarSystemInstance = new SolarSystem();
 });
 
 // 全屏功能

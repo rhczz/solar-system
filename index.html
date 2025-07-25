@@ -22,10 +22,97 @@
             height: 100vh;
             position: relative;
         }
+
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #info-panel h3 {
+            color: #4169E1;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        #info-panel .section {
+            margin-bottom: 12px;
+        }
+
+        #info-panel .label {
+            color: #87CEEB;
+            font-weight: bold;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #controls button {
+            background: rgba(65, 105, 225, 0.3);
+            color: white;
+            border: 1px solid #4169E1;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        #controls button:hover {
+            background: rgba(65, 105, 225, 0.5);
+        }
     </style>
 </head>
 <body>
     <div id="container"></div>
+    
+    <div id="info-panel">
+        <h3>🌌 奥尔特云太阳系</h3>
+        <div class="section">
+            <div class="label">奥尔特云：</div>
+            <div>太阳系边缘的球形云团，距离太阳2,000-200,000天文单位</div>
+        </div>
+        <div class="section">
+            <div class="label">内奥尔特云：</div>
+            <div>2,000-20,000 AU，盘状结构</div>
+        </div>
+        <div class="section">
+            <div class="label">外奥尔特云：</div>
+            <div>20,000+ AU，球形分布</div>
+        </div>
+        <div class="section">
+            <div class="label">组成：</div>
+            <div>冰质小天体、彗星核、原始太阳星云残留</div>
+        </div>
+        <div class="section">
+            <div class="label">特点：</div>
+            <div>长周期彗星的主要来源，受恒星和银河系引力影响</div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button onclick="window.solarSystemInstance.focusOnOortCloud()">观察奥尔特云</button>
+        <button onclick="window.solarSystemInstance.focusOnSolarSystem()">回到太阳系</button>
+        <button onclick="window.solarSystemInstance.toggleOortCloudVisibility()">切换奥尔特云显示</button>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
