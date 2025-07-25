@@ -79,43 +79,64 @@
         #controls button:hover {
             background: rgba(65, 105, 225, 0.5);
         }
+        
+        #perspective-toggle {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(25, 25, 112, 0.7);
+            border: 1px solid rgba(135, 206, 235, 0.5);
+            color: #87CEEB;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(135, 206, 235, 0.5);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        #perspective-toggle:hover {
+            background: rgba(25, 25, 112, 0.9);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(135, 206, 235, 0.8);
+        }
+        
+        #perspective-toggle:before {
+            content: "🔭";
+        }
     </style>
 </head>
 <body>
     <div id="container"></div>
     
-    <div id="info-panel">
-        <h3>🌌 奥尔特云太阳系</h3>
-        <div class="section">
-            <div class="label">奥尔特云：</div>
-            <div>太阳系边缘的球形云团，距离太阳2,000-200,000天文单位</div>
-        </div>
-        <div class="section">
-            <div class="label">内奥尔特云：</div>
-            <div>2,000-20,000 AU，盘状结构</div>
-        </div>
-        <div class="section">
-            <div class="label">外奥尔特云：</div>
-            <div>20,000+ AU，球形分布</div>
-        </div>
-        <div class="section">
-            <div class="label">组成：</div>
-            <div>冰质小天体、彗星核、原始太阳星云残留</div>
-        </div>
-        <div class="section">
-            <div class="label">特点：</div>
-            <div>长周期彗星的主要来源，受恒星和银河系引力影响</div>
-        </div>
-    </div>
-
     <div id="controls">
-        <button onclick="window.solarSystemInstance.focusOnOortCloud()">观察奥尔特云</button>
-        <button onclick="window.solarSystemInstance.focusOnSolarSystem()">回到太阳系</button>
-        <button onclick="window.solarSystemInstance.toggleOortCloudVisibility()">切换奥尔特云显示</button>
     </div>
+    
+    <div id="perspective-toggle" onclick="togglePerspective()"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="script.js"></script>
+    
+    <script>
+        let isGlobalView = false;
+        
+        function togglePerspective() {
+            isGlobalView = !isGlobalView;
+            
+            if (isGlobalView) {
+                // 切换到全局视角（奥尔特云视角）
+                window.solarSystemInstance.focusOnOortCloud();
+            } else {
+                // 切换到太阳系视角
+                window.solarSystemInstance.focusOnSolarSystem();
+            }
+        }
+    </script>
 </body>
 </html>
