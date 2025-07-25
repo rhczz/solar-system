@@ -156,7 +156,11 @@ class SolarSystem {
                 orbitSpeed: 0.008,
                 textureType: 'mars',
                 hasAtmosphere: true,
-                atmosphereColor: 0xFFB347
+                atmosphereColor: 0xFFB347,
+                moons: [
+                    { name: "Phobos", radius: 0.1, distance: 1.5, orbitSpeed: 0.08 }, 
+                    { name: "Deimos", radius: 0.05, distance: 2.2, orbitSpeed: 0.05 }
+                ]
             },
             jupiter: {
                 radius: 3.5,
@@ -166,7 +170,13 @@ class SolarSystem {
                 orbitSpeed: 0.005,
                 hasRings: true,
                 textureType: 'gas_giant',
-                stormSpots: true
+                stormSpots: true,
+                moons: [
+                    { name: "Ganymede", radius: 0.8, distance: 8, orbitSpeed: 0.02 },
+                    { name: "Callisto", radius: 0.7, distance: 10, orbitSpeed: 0.015 },
+                    { name: "Io", radius: 0.6, distance: 6, orbitSpeed: 0.03 },
+                    { name: "Europa", radius: 0.5, distance: 7, orbitSpeed: 0.025 }
+                ]
             },
             saturn: {
                 radius: 2.9,
@@ -176,7 +186,12 @@ class SolarSystem {
                 orbitSpeed: 0.003,
                 hasRings: true,
                 prominentRings: true,
-                textureType: 'gas_giant'
+                textureType: 'gas_giant',
+                moons: [
+                    { name: "Titan", radius: 0.7, distance: 8, orbitSpeed: 0.02 },
+                    { name: "Rhea", radius: 0.3, distance: 6, orbitSpeed: 0.03 },
+                    { name: "Enceladus", radius: 0.15, distance: 4, orbitSpeed: 0.04 }
+                ]
             },
             uranus: {
                 radius: 2,
@@ -186,7 +201,12 @@ class SolarSystem {
                 orbitSpeed: 0.002,
                 textureType: 'ice_giant',
                 hasRings: true,
-                tiltedAxis: true
+                tiltedAxis: true,
+                moons: [
+                    { name: "Titania", radius: 0.3, distance: 5, orbitSpeed: 0.02 },
+                    { name: "Oberon", radius: 0.25, distance: 6, orbitSpeed: 0.015 },
+                    { name: "Miranda", radius: 0.1, distance: 3, orbitSpeed: 0.03 }
+                ]
             },
             neptune: {
                 radius: 1.9,
@@ -195,7 +215,21 @@ class SolarSystem {
                 rotationSpeed: 0.02,
                 orbitSpeed: 0.001,
                 textureType: 'ice_giant',
-                hasStorms: true
+                hasStorms: true,
+                moons: [
+                    { name: "Triton", radius: 0.5, distance: 5, orbitSpeed: 0.015 },
+                    { name: "Proteus", radius: 0.15, distance: 6, orbitSpeed: 0.02 }
+                ]
+            },
+            // 添加冥王星数据
+            pluto: {
+                radius: 0.19,
+                color: 0x8C7853,
+                distance: 125,
+                rotationSpeed: 0.01,
+                orbitSpeed: 0.0005,
+                textureType: 'rocky',
+                hasMoon: true
             }
         };
 
@@ -551,6 +585,11 @@ class SolarSystem {
             this.createMoon(planet);
         }
         
+        // 如果有卫星
+        if (data.moons) {
+            this.createMoons(planet, data.moons);
+        }
+        
         // 如果有风暴斑点（木星）
         if (data.stormSpots) {
             this.createStormSpots(planet);
@@ -558,6 +597,28 @@ class SolarSystem {
         
         this.scene.add(planet);
         this.celestialBodies[name] = planet;
+    }
+
+    createMoons(planet, moonsData) {
+        planet.userData.moons = [];
+        
+        moonsData.forEach(moonData => {
+            const moonGeometry = new THREE.SphereGeometry(moonData.radius, 8, 8);
+            // 为不同的卫星使用不同的颜色
+            const moonMaterial = new THREE.MeshLambertMaterial({ 
+                color: new THREE.Color(Math.random() * 0xFFFFFF)
+            });
+            const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+            
+            moon.userData = {
+                distance: moonData.distance,
+                orbitSpeed: moonData.orbitSpeed,
+                angle: Math.random() * Math.PI * 2 // 随机起始角度
+            };
+            
+            planet.add(moon);
+            planet.userData.moons.push(moon);
+        });
     }
 
     createRealisticTexture(name, data) {
@@ -1794,6 +1855,264 @@ class SolarSystem {
                 secondaryColor: 0x00CED1,
                 trapezium: true,
                 brightness: 0.8
+            },
+            // 室女座超星系团中的星系
+            {
+                name: 'M87',
+                type: 'elliptical_galaxy',
+                distance: 2500,
+                position: { x: 1800, y: 1200, z: -1800 },
+                size: 150,
+                color: 0xF5F5DC,
+                brightness: 0.7
+            },
+            {
+                name: 'M49',
+                type: 'elliptical_galaxy',
+                distance: 2600,
+                position: { x: -1600, y: -1000, z: 1600 },
+                size: 120,
+                color: 0xFFD700,
+                brightness: 0.6
+            },
+            {
+                name: 'M86',
+                type: 'lenticular_galaxy',
+                distance: 2400,
+                position: { x: 1400, y: -1400, z: 1400 },
+                size: 100,
+                color: 0xD3D3D3,
+                brightness: 0.5
+            },
+            {
+                name: 'M58',
+                type: 'barred_spiral_galaxy',
+                distance: 2700,
+                position: { x: -1800, y: 800, z: -1200 },
+                size: 90,
+                color: 0x87CEEB,
+                brightness: 0.6
+            },
+            {
+                name: 'M59',
+                type: 'elliptical_galaxy',
+                distance: 2800,
+                position: { x: 1000, y: 1600, z: 1000 },
+                size: 80,
+                color: 0xF0E68C,
+                brightness: 0.5
+            },
+            {
+                name: 'M60',
+                type: 'elliptical_galaxy',
+                distance: 2900,
+                position: { x: -1200, y: -1600, z: -1400 },
+                size: 110,
+                color: 0xFFE4B5,
+                brightness: 0.6
+            },
+            {
+                name: 'M84',
+                type: 'lenticular_galaxy',
+                distance: 3000,
+                position: { x: 2000, y: -800, z: 1800 },
+                size: 95,
+                color: 0xD2B48C,
+                brightness: 0.5
+            },
+            {
+                name: 'M85',
+                type: 'elliptical_galaxy',
+                distance: 3100,
+                position: { x: -2000, y: 1400, z: 1200 },
+                size: 85,
+                color: 0xFFEBCD,
+                brightness: 0.6
+            },
+            {
+                name: 'M88',
+                type: 'spiral_galaxy',
+                distance: 3200,
+                position: { x: 800, y: 2000, z: -1600 },
+                size: 105,
+                color: 0x87CEFA,
+                brightness: 0.7
+            },
+            {
+                name: 'M90',
+                type: 'lenticular_galaxy',
+                distance: 3300,
+                position: { x: -800, y: -2000, z: 1000 },
+                size: 90,
+                color: 0xB0C4DE,
+                brightness: 0.5
+            },
+            {
+                name: 'M91',
+                type: 'barred_spiral_galaxy',
+                distance: 3400,
+                position: { x: 2200, y: 600, z: 2000 },
+                size: 75,
+                color: 0xADD8E6,
+                brightness: 0.6
+            },
+            {
+                name: 'NGC 4435',
+                type: 'elliptical_galaxy',
+                distance: 3500,
+                position: { x: -2200, y: -600, z: -1800 },
+                size: 70,
+                color: 0xF5DEB3,
+                brightness: 0.5
+            },
+            {
+                name: 'NGC 4438',
+                type: 'distorted_galaxy',
+                distance: 3600,
+                position: { x: 600, y: -2200, z: 1600 },
+                size: 80,
+                color: 0xCD853F,
+                brightness: 0.6
+            },
+            // 本星系群
+            {
+                name: 'Andromeda Galaxy (M31)',
+                type: 'spiral_galaxy',
+                distance: 3700,
+                position: { x: -600, y: 2400, z: -2000 },
+                size: 200,
+                color: 0xFFFFFF,
+                brightness: 0.8
+            },
+            {
+                name: 'Triangulum Galaxy (M33)',
+                type: 'spiral_galaxy',
+                distance: 3800,
+                position: { x: 2400, y: -2000, z: 1800 },
+                size: 120,
+                color: 0xF0FFFF,
+                brightness: 0.6
+            },
+            // 猎犬座星系群
+            {
+                name: 'M94',
+                type: 'ring_galaxy',
+                distance: 3900,
+                position: { x: -2400, y: 1800, z: 2000 },
+                size: 95,
+                color: 0xE0FFFF,
+                brightness: 0.7
+            },
+            {
+                name: 'M106',
+                type: 'spiral_galaxy',
+                distance: 4000,
+                position: { x: 400, y: 2600, z: -2200 },
+                size: 100,
+                color: 0xAFEEEE,
+                brightness: 0.6
+            },
+            // 狮子座星系群
+            {
+                name: 'M65',
+                type: 'spiral_galaxy',
+                distance: 4100,
+                position: { x: -400, y: -2600, z: 2200 },
+                size: 85,
+                color: 0x7FFFD4,
+                brightness: 0.5
+            },
+            {
+                name: 'M66',
+                type: 'spiral_galaxy',
+                distance: 4200,
+                position: { x: 2600, y: 1000, z: 2400 },
+                size: 90,
+                color: 0x00FFFF,
+                brightness: 0.6
+            },
+            {
+                name: 'NGC 3628',
+                type: 'edge_on_galaxy',
+                distance: 4300,
+                position: { x: -2600, y: -1000, z: -2400 },
+                size: 110,
+                color: 0x5F9EA0,
+                brightness: 0.7
+            },
+            {
+                name: 'M95',
+                type: 'barred_spiral_galaxy',
+                distance: 4400,
+                position: { x: 1000, y: -2800, z: 2600 },
+                size: 80,
+                color: 0x40E0D0,
+                brightness: 0.6
+            },
+            {
+                name: 'M96',
+                type: 'spiral_galaxy',
+                distance: 4500,
+                position: { x: -1000, y: 2800, z: -2600 },
+                size: 85,
+                color: 0x00CED1,
+                brightness: 0.5
+            },
+            {
+                name: 'M105',
+                type: 'elliptical_galaxy',
+                distance: 4600,
+                position: { x: 2800, y: -400, z: 2800 },
+                size: 75,
+                color: 0x20B2AA,
+                brightness: 0.6
+            },
+            // 大熊座星系群
+            {
+                name: 'M81',
+                type: 'spiral_galaxy',
+                distance: 4700,
+                position: { x: -2800, y: 400, z: -2800 },
+                size: 130,
+                color: 0x008B8B,
+                brightness: 0.7
+            },
+            {
+                name: 'M82',
+                type: 'starburst_galaxy',
+                distance: 4800,
+                position: { x: 1200, y: 3000, z: 3000 },
+                size: 90,
+                color: 0xFF6347,
+                brightness: 0.8
+            },
+            // 其他重要星系
+            {
+                name: 'NGC 1365',
+                type: 'barred_spiral_galaxy',
+                distance: 4900,
+                position: { x: -1200, y: -3000, z: 3200 },
+                size: 110,
+                color: 0xFF4500,
+                brightness: 0.7
+            },
+            {
+                name: 'Centaurus A (NGC 5128)',
+                type: 'elliptical_galaxy',
+                distance: 5000,
+                position: { x: 3000, y: -1200, z: -3000 },
+                size: 120,
+                color: 0x8B4513,
+                brightness: 0.8
+            },
+            {
+                name: 'NGC 253 (Sculptor Galaxy)',
+                type: 'edge_on_galaxy',
+                distance: 5100,
+                position: { x: -3000, y: 1200, z: 3200 },
+                size: 100,
+                color: 0xD2691E,
+                brightness: 0.7
             }
         ];
 
@@ -1821,6 +2140,30 @@ class SolarSystem {
                 break;
             case 'planetary_nebula':
                 this.createPlanetaryNebula(group, wonderData);
+                break;
+            case 'spiral_galaxy':
+                this.createSpiralGalaxy(group, wonderData);
+                break;
+            case 'elliptical_galaxy':
+                this.createEllipticalGalaxy(group, wonderData);
+                break;
+            case 'lenticular_galaxy':
+                this.createLenticularGalaxy(group, wonderData);
+                break;
+            case 'barred_spiral_galaxy':
+                this.createBarredSpiralGalaxy(group, wonderData);
+                break;
+            case 'ring_galaxy':
+                this.createRingGalaxy(group, wonderData);
+                break;
+            case 'edge_on_galaxy':
+                this.createEdgeOnGalaxy(group, wonderData);
+                break;
+            case 'starburst_galaxy':
+                this.createStarburstGalaxy(group, wonderData);
+                break;
+            case 'distorted_galaxy':
+                this.createDistortedGalaxy(group, wonderData);
                 break;
         }
         
@@ -2179,6 +2522,367 @@ class SolarSystem {
         
         // 外层包络
         this.createNebulaEnvelope(group, wonderData);
+    }
+
+    createSpiralGalaxy(group, wonderData) {
+        // 创建旋涡星系
+        
+        // 星系核心
+        const coreGeometry = new THREE.SphereGeometry(wonderData.size * 0.2, 16, 16);
+        const coreMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            emissive: wonderData.color,
+            emissiveIntensity: 0.2
+        });
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        group.add(core);
+        
+        // 创建旋臂
+        for (let i = 0; i < 4; i++) {
+            const armGeometry = new THREE.RingGeometry(
+                wonderData.size * 0.25, 
+                wonderData.size * 0.8, 
+                32, 1, 
+                0, 
+                Math.PI * 1.5
+            );
+            
+            const armMaterial = new THREE.MeshBasicMaterial({
+                color: wonderData.color,
+                transparent: true,
+                opacity: 0.4,
+                side: THREE.DoubleSide
+            });
+            
+            const arm = new THREE.Mesh(armGeometry, armMaterial);
+            arm.rotation.x = Math.PI / 2;
+            arm.rotation.z = (i * Math.PI / 2);
+            group.add(arm);
+        }
+        
+        // 星系盘面
+        const diskGeometry = new THREE.RingGeometry(
+            wonderData.size * 0.8, 
+            wonderData.size, 
+            64
+        );
+        
+        const diskMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.2,
+            side: THREE.DoubleSide
+        });
+        
+        const disk = new THREE.Mesh(diskGeometry, diskMaterial);
+        disk.rotation.x = Math.PI / 2;
+        group.add(disk);
+    }
+
+    createEllipticalGalaxy(group, wonderData) {
+        // 创建椭圆星系
+        const geometry = new THREE.SphereGeometry(wonderData.size, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.6
+        });
+        
+        const galaxy = new THREE.Mesh(geometry, material);
+        group.add(galaxy);
+        
+        // 添加核心亮区
+        const coreGeometry = new THREE.SphereGeometry(wonderData.size * 0.3, 16, 16);
+        const coreMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            emissive: 0xFFFFFF,
+            emissiveIntensity: 0.3
+        });
+        
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        group.add(core);
+    }
+
+    createLenticularGalaxy(group, wonderData) {
+        // 创建透镜状星系
+        const geometry = new THREE.SphereGeometry(wonderData.size, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.5
+        });
+        
+        const galaxy = new THREE.Mesh(geometry, material);
+        galaxy.scale.set(1.2, 0.6, 1.2); // 扁平化
+        group.add(galaxy);
+        
+        // 添加中心凸起
+        const bulgeGeometry = new THREE.SphereGeometry(wonderData.size * 0.4, 16, 16);
+        const bulgeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            emissive: 0xFFFFFF,
+            emissiveIntensity: 0.2
+        });
+        
+        const bulge = new THREE.Mesh(bulgeGeometry, bulgeMaterial);
+        group.add(bulge);
+    }
+
+    createBarredSpiralGalaxy(group, wonderData) {
+        // 创建棒旋星系
+        
+        // 星系核心
+        const coreGeometry = new THREE.SphereGeometry(wonderData.size * 0.2, 16, 16);
+        const coreMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            emissive: wonderData.color,
+            emissiveIntensity: 0.2
+        });
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        group.add(core);
+        
+        // 中心棒状结构
+        const barGeometry = new THREE.CylinderGeometry(
+            wonderData.size * 0.05, 
+            wonderData.size * 0.05, 
+            wonderData.size * 0.6, 
+            8
+        );
+        
+        const barMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.7
+        });
+        
+        const bar = new THREE.Mesh(barGeometry, barMaterial);
+        bar.rotation.x = Math.PI / 2;
+        group.add(bar);
+        
+        // 创建旋臂（从棒的末端开始）
+        for (let i = 0; i < 2; i++) {
+            const armGeometry = new THREE.RingGeometry(
+                wonderData.size * 0.3, 
+                wonderData.size * 0.8, 
+                32, 1, 
+                0, 
+                Math.PI
+            );
+            
+            const armMaterial = new THREE.MeshBasicMaterial({
+                color: wonderData.color,
+                transparent: true,
+                opacity: 0.4,
+                side: THREE.DoubleSide
+            });
+            
+            const arm = new THREE.Mesh(armGeometry, armMaterial);
+            arm.rotation.x = Math.PI / 2;
+            arm.rotation.z = (i * Math.PI);
+            group.add(arm);
+        }
+    }
+
+    createRingGalaxy(group, wonderData) {
+        // 创建环状星系（如M94）
+        
+        // 星系核心
+        const coreGeometry = new THREE.SphereGeometry(wonderData.size * 0.2, 16, 16);
+        const coreMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            emissive: wonderData.color,
+            emissiveIntensity: 0.3
+        });
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        group.add(core);
+        
+        // 内环（恒星形成区）
+        const innerRingGeometry = new THREE.RingGeometry(
+            wonderData.size * 0.25, 
+            wonderData.size * 0.4, 
+            32
+        );
+        
+        const innerRingMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFF6347, // 红橙色表示恒星形成区
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
+        
+        const innerRing = new THREE.Mesh(innerRingGeometry, innerRingMaterial);
+        innerRing.rotation.x = Math.PI / 2;
+        group.add(innerRing);
+        
+        // 外环
+        const outerRingGeometry = new THREE.RingGeometry(
+            wonderData.size * 0.6, 
+            wonderData.size, 
+            64
+        );
+        
+        const outerRingMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+        });
+        
+        const outerRing = new THREE.Mesh(outerRingGeometry, outerRingMaterial);
+        outerRing.rotation.x = Math.PI / 2;
+        group.add(outerRing);
+    }
+
+    createEdgeOnGalaxy(group, wonderData) {
+        // 创建侧向星系（如NGC 4244, NGC 3628）
+        
+        // 侧向盘面
+        const diskGeometry = new THREE.CylinderGeometry(
+            wonderData.size, 
+            wonderData.size, 
+            wonderData.size * 0.1, 
+            64
+        );
+        
+        const diskMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.6
+        });
+        
+        const disk = new THREE.Mesh(diskGeometry, diskMaterial);
+        disk.rotation.x = Math.PI / 2;
+        group.add(disk);
+        
+        // 中心凸起
+        const bulgeGeometry = new THREE.SphereGeometry(wonderData.size * 0.3, 16, 16);
+        const bulgeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            emissive: 0xFFFFFF,
+            emissiveIntensity: 0.2
+        });
+        
+        const bulge = new THREE.Mesh(bulgeGeometry, bulgeMaterial);
+        group.add(bulge);
+        
+        // 尘埃带（如果适用）
+        const dustGeometry = new THREE.RingGeometry(
+            wonderData.size * 0.4, 
+            wonderData.size * 0.6, 
+            32
+        );
+        
+        const dustMaterial = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            transparent: true,
+            opacity: 0.4,
+            side: THREE.DoubleSide
+        });
+        
+        const dust = new THREE.Mesh(dustGeometry, dustMaterial);
+        dust.rotation.x = Math.PI / 2;
+        group.add(dust);
+    }
+
+    createStarburstGalaxy(group, wonderData) {
+        // 创建星暴星系（如M82）
+        
+        // 扁平的星系主体
+        const bodyGeometry = new THREE.CylinderGeometry(
+            wonderData.size * 0.8, 
+            wonderData.size, 
+            wonderData.size * 0.3, 
+            32
+        );
+        
+        const bodyMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.7
+        });
+        
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.rotation.x = Math.PI / 2;
+        group.add(body);
+        
+        // 气体喷流
+        const jetGeometry = new THREE.CylinderGeometry(
+            wonderData.size * 0.05, 
+            wonderData.size * 0.1, 
+            wonderData.size * 1.5, 
+            8
+        );
+        
+        const jetMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFF4500,
+            transparent: true,
+            opacity: 0.5
+        });
+        
+        const jet1 = new THREE.Mesh(jetGeometry, jetMaterial);
+        jet1.position.y = wonderData.size * 0.75;
+        jet1.rotation.x = Math.PI / 2;
+        group.add(jet1);
+        
+        const jet2 = new THREE.Mesh(jetGeometry, jetMaterial);
+        jet2.position.y = -wonderData.size * 0.75;
+        jet2.rotation.x = Math.PI / 2;
+        group.add(jet2);
+        
+        // 星暴区域（明亮的核心）
+        const coreGeometry = new THREE.SphereGeometry(wonderData.size * 0.4, 16, 16);
+        const coreMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            emissive: 0xFFFFFF,
+            emissiveIntensity: 0.5
+        });
+        
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        group.add(core);
+    }
+
+    createDistortedGalaxy(group, wonderData) {
+        // 创建扭曲星系（如NGC 4438）
+        
+        // 不规则形状的主体
+        const geometry = new THREE.SphereGeometry(wonderData.size, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.6
+        });
+        
+        const galaxy = new THREE.Mesh(geometry, material);
+        
+        // 应用一些随机变形来模拟扭曲效果
+        const positions = galaxy.geometry.attributes.position;
+        for (let i = 0; i < positions.count; i++) {
+            const i3 = i * 3;
+            positions.array[i3] += (Math.random() - 0.5) * wonderData.size * 0.2;
+            positions.array[i3 + 1] += (Math.random() - 0.5) * wonderData.size * 0.2;
+            positions.array[i3 + 2] += (Math.random() - 0.5) * wonderData.size * 0.2;
+        }
+        
+        positions.needsUpdate = true;
+        group.add(galaxy);
+        
+        // 添加潮汐尾
+        const tailGeometry = new THREE.ConeGeometry(
+            wonderData.size * 0.2, 
+            wonderData.size * 1.5, 
+            8
+        );
+        
+        const tailMaterial = new THREE.MeshBasicMaterial({
+            color: wonderData.color,
+            transparent: true,
+            opacity: 0.3
+        });
+        
+        const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+        tail.position.x = wonderData.size * 0.75;
+        tail.rotation.z = Math.PI / 2;
+        group.add(tail);
     }
 
     // 纹理创建方法
@@ -2565,6 +3269,15 @@ class SolarSystem {
                     moon.userData.angle += moon.userData.orbitSpeed;
                     moon.position.x = Math.cos(moon.userData.angle) * moon.userData.distance;
                     moon.position.z = Math.sin(moon.userData.angle) * moon.userData.distance;
+                }
+                
+                // 更新卫星位置
+                if (data.moons) {
+                    data.moons.forEach(moon => {
+                        moon.userData.angle += moon.userData.orbitSpeed;
+                        moon.position.x = Math.cos(moon.userData.angle) * moon.userData.distance;
+                        moon.position.z = Math.sin(moon.userData.angle) * moon.userData.distance;
+                    });
                 }
             }
         });
